@@ -14,13 +14,11 @@ namespace TaskManager.Application.Handlers.Commands
     public class CreateTaskHandler : ICreateTaskHandler
     {
         private readonly ITaskRepository _taskRepository;
-        private readonly RabbitMqProducer _messageProducer;
         private readonly ILogger<CreateTaskHandler> _logger;
 
-        public CreateTaskHandler(ITaskRepository taskRepository, RabbitMqProducer messageProducer, ILogger<CreateTaskHandler> logger)
+        public CreateTaskHandler(ITaskRepository taskRepository, ILogger<CreateTaskHandler> logger)
         {
             _taskRepository = taskRepository;
-            _messageProducer = messageProducer;
             _logger = logger;
         }
 
@@ -40,10 +38,6 @@ namespace TaskManager.Application.Handlers.Commands
             };
 
             await _taskRepository.AddAsync(task);
-
-            // Publish message for asynchronous processing
-            await _messageProducer.PublishTaskCreated(new TaskCreatedMessage { TaskId = task.Id });
-
             return task.Id;
         }
     }

@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -11,26 +7,33 @@ using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using TaskManager.Infrastructure.Caching;
+using TaskManager.Application.Handlers.Commands;
 
 namespace TaskManager.Infrastructure.Messaging
 {
-    public class RabbitMqConsumer : BackgroundService
+    public class RabbitMqConsumer<T> : BackgroundService where T : class
     {
         private readonly IConnection _connection;
         private readonly IChannel _channel;
         private readonly IServiceScopeFactory _serviceScopeFactory;
-        private readonly ILogger<RabbitMqConsumer> _logger;
-        private const string ExchangeName = "task_events";
-        private const string QueueName = "task_created_queue";
-        private const string RoutingKey = "task.created";
+        private readonly ILogger<RabbitMqConsumer<T>> _logger;
+        private readonly string _exchangeName;
+        private readonly string _queueName;
+        private readonly string _routingKey;
 
         public RabbitMqConsumer(
             IConfiguration configuration,
             IServiceScopeFactory serviceScopeFactory,
-            ILogger<RabbitMqConsumer> logger)
+            ILogger<RabbitMqConsumer<T>> logger,
+            string exchangeName,
+            string queueName,
+            string routingKey)
         {
             _serviceScopeFactory = serviceScopeFactory;
             _logger = logger;
+            _exchangeName = exchangeName;
+            _queueName = queueName;
+            _routingKey = routingKey;
 
             try
             {
@@ -45,21 +48,21 @@ namespace TaskManager.Infrastructure.Messaging
                 _channel = _connection.CreateChannelAsync().Result;
 
                 _channel.ExchangeDeclareAsync(
-                    exchange: ExchangeName,
+                    exchange: _exchangeName,
                     type: ExchangeType.Topic,
                     durable: true,
                     autoDelete: false);
 
                 _channel.QueueDeclareAsync(
-                    queue: QueueName,
+                    queue: _queueName,
                     durable: true,
                     exclusive: false,
                     autoDelete: false);
 
                 _channel.QueueBindAsync(
-                    queue: QueueName,
-                    exchange: ExchangeName,
-                    routingKey: RoutingKey);
+                    queue: _queueName,
+                    exchange: _exchangeName,
+                    routingKey: _routingKey);
 
                 _logger.LogInformation("RabbitMQ consumer initialized");
             }
@@ -97,8 +100,7 @@ namespace TaskManager.Infrastructure.Messaging
                 }
             };
 
-            await _channel.BasicConsumeAsync(queue: QueueName, autoAck: false, consumer: consumer);
-
+            await _channel.BasicConsumeAsync(queue: _queueName, autoAck: false, consumer: consumer);
         }
 
         private async Task ProcessTaskCreatedMessageAsync(TaskCreatedMessage message)
@@ -108,8 +110,8 @@ namespace TaskManager.Infrastructure.Messaging
 
             // Invalidate relevant cache entries
             await cacheService.RemoveAsync($"task:{message.TaskId}");
-            await cacheService.RemoveAsync("tasks:all:*");
-            await cacheService.RemoveAsync("tasks:status:Pending:*");
+                await cacheService.RemoveAsync("tasks:all:*");
+                await cacheService.RemoveAsync("tasks:status:Pending:*");
 
             _logger.LogInformation("Processed task created message for TaskId: {TaskId}", message.TaskId);
         }
