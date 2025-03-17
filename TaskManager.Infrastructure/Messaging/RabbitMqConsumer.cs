@@ -2,13 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 using TaskManager.Infrastructure.Caching;
 
 namespace TaskManager.Infrastructure.Messaging
@@ -16,7 +17,7 @@ namespace TaskManager.Infrastructure.Messaging
     public class RabbitMqConsumer : BackgroundService
     {
         private readonly IConnection _connection;
-        private readonly IModel _channel;
+        private readonly IChannel _channel;
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly ILogger<RabbitMqConsumer> _logger;
         private const string ExchangeName = "task_events";
@@ -40,22 +41,22 @@ namespace TaskManager.Infrastructure.Messaging
                     Password = configuration["RabbitMQ:Password"]
                 };
 
-                _connection = factory.CreateConnection();
-                _channel = _connection.CreateModel();
+                _connection = factory.CreateConnectionAsync().Result;
+                _channel = _connection.CreateChannelAsync().Result;
 
-                _channel.ExchangeDeclare(
+                _channel.ExchangeDeclareAsync(
                     exchange: ExchangeName,
                     type: ExchangeType.Topic,
                     durable: true,
                     autoDelete: false);
 
-                _channel.QueueDeclare(
+                _channel.QueueDeclareAsync(
                     queue: QueueName,
                     durable: true,
                     exclusive: false,
                     autoDelete: false);
 
-                _channel.QueueBind(
+                _channel.QueueBindAsync(
                     queue: QueueName,
                     exchange: ExchangeName,
                     routingKey: RoutingKey);
@@ -69,12 +70,12 @@ namespace TaskManager.Infrastructure.Messaging
             }
         }
 
-        protected override Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             stoppingToken.ThrowIfCancellationRequested();
 
-            var consumer = new EventingBasicConsumer(_channel);
-            consumer.Received += async (_, ea) =>
+            var consumer = new AsyncEventingBasicConsumer(_channel);
+            consumer.ReceivedAsync += async (_, ea) =>
             {
                 try
                 {
@@ -87,18 +88,17 @@ namespace TaskManager.Infrastructure.Messaging
                     await ProcessTaskCreatedMessageAsync(message);
 
                     // Acknowledge the message
-                    _channel.BasicAck(ea.DeliveryTag, false);
+                    await _channel.BasicAckAsync(ea.DeliveryTag, false);
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error processing RabbitMQ message");
-                    _channel.BasicNack(ea.DeliveryTag, false, true);
+                    await _channel.BasicNackAsync(ea.DeliveryTag, false, true);
                 }
             };
 
-            _channel.BasicConsume(queue: QueueName, autoAck: false, consumer: consumer);
+            await _channel.BasicConsumeAsync(queue: QueueName, autoAck: false, consumer: consumer);
 
-            return Task.CompletedTask;
         }
 
         private async Task ProcessTaskCreatedMessageAsync(TaskCreatedMessage message)
@@ -121,5 +121,4 @@ namespace TaskManager.Infrastructure.Messaging
             base.Dispose();
         }
     }
-}
 }

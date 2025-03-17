@@ -8,17 +8,17 @@ using RabbitMQ.Client;
 
 namespace TaskManager.Infrastructure.Messaging
 {
-    public class RabbitMqProducer : IMessageProducer, IAsyncDisposable, IDisposable
+    public class RabbitMqProducer : IMessageProducer
     {
         private IConnection _connection;
-        private IModel _channel;
+        private IChannel _channel;
         private readonly ILogger<RabbitMqProducer> _logger;
         private readonly IConfiguration _configuration;
         private const string ExchangeName = "task_events";
         private const string RoutingKey = "task.created";
 
         // Private constructor prevents direct instantiation.
-        private RabbitMqProducer(IConfiguration configuration, ILogger<RabbitMqProducer> logger)
+        public RabbitMqProducer(IConfiguration configuration, ILogger<RabbitMqProducer> logger)
         {
             _configuration = configuration;
             _logger = logger;
@@ -47,7 +47,7 @@ namespace TaskManager.Infrastructure.Messaging
                 _connection = await factory.CreateConnectionAsync();
                 _channel = await _connection.CreateChannelAsync();
 
-                _channel.ExchangeDeclare(
+                await _channel.ExchangeDeclareAsync(
                     exchange: ExchangeName,
                     type: ExchangeType.Topic,
                     durable: true,
@@ -62,17 +62,16 @@ namespace TaskManager.Infrastructure.Messaging
             }
         }
 
-        public void PublishTaskCreated(TaskCreatedMessage message)
+        public async Task PublishTaskCreated(TaskCreatedMessage message)
         {
             try
             {
                 var json = JsonSerializer.Serialize(message);
                 var body = Encoding.UTF8.GetBytes(json);
 
-                _channel.BasicPublish(
+                await _channel.BasicPublishAsync(
                     exchange: ExchangeName,
                     routingKey: RoutingKey,
-                    basicProperties: null,
                     body: body);
 
                 _logger.LogInformation("Published task created message for TaskId: {TaskId}", message.TaskId);
@@ -82,22 +81,5 @@ namespace TaskManager.Infrastructure.Messaging
                 _logger.LogError(ex, "Error publishing message to RabbitMQ");
             }
         }
-
-        // Asynchronous disposal to properly release RabbitMQ resources.
-        public async ValueTask DisposeAsync()
-        {
-            if (_channel != null)
-            {
-                await _channel.DisposeAsync();
-            }
-            if (_connection != null)
-            {
-                await _connection.DisposeAsync();
-            }
-            GC.SuppressFinalize(this);
-        }
-
-        // Synchronous disposal fallback.
-        public void Dispose() => DisposeAsync().AsTask().GetAwaiter().GetResult();
     }
 }

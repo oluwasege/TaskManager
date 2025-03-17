@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using TaskManager.Application.Commands;
 using TaskManager.Application.Exceptions;
+using TaskManager.Infrastructure.Repositories;
 
 namespace TaskManager.Application.Handlers.Commands
 {
@@ -36,4 +37,3 @@ namespace TaskManager.Application.Handlers.Commands
     }
 }
 
-}

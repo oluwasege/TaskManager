@@ -5,17 +5,19 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using TaskManager.Application.Commands;
+using TaskManager.Infrastructure.Messaging;
+using TaskManager.Infrastructure.Repositories;
 using TaskStatus = TaskManager.Domain.Entities.TaskStatus;
 
 namespace TaskManager.Application.Handlers.Commands
 {
-    public class CreateTaskHandler
+    public class CreateTaskHandler : ICreateTaskHandler
     {
         private readonly ITaskRepository _taskRepository;
-        private readonly IMessageProducer _messageProducer;
+        private readonly RabbitMqProducer _messageProducer;
         private readonly ILogger<CreateTaskHandler> _logger;
 
-        public CreateTaskHandler(ITaskRepository taskRepository, IMessageProducer messageProducer, ILogger<CreateTaskHandler> logger)
+        public CreateTaskHandler(ITaskRepository taskRepository, RabbitMqProducer messageProducer, ILogger<CreateTaskHandler> logger)
         {
             _taskRepository = taskRepository;
             _messageProducer = messageProducer;
@@ -40,8 +42,9 @@ namespace TaskManager.Application.Handlers.Commands
             await _taskRepository.AddAsync(task);
 
             // Publish message for asynchronous processing
-            _messageProducer.PublishTaskCreated(new TaskCreatedMessage { TaskId = task.Id });
+            await _messageProducer.PublishTaskCreated(new TaskCreatedMessage { TaskId = task.Id });
 
             return task.Id;
         }
     }
+}

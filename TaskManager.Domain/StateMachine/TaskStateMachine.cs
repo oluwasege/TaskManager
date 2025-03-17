@@ -13,7 +13,7 @@ namespace TaskManager.Domain.StateMachine
             { TaskStatus.Canceled, new[] { TaskStatus.Pending } }
         };
 
-        public static bool CanTransition(TaskStatus currentStatus, TaskStatus newStatus)
+        public bool CanTransition(TaskStatus currentStatus, TaskStatus newStatus)
         {
             if (!_allowedTransitions.TryGetValue(currentStatus, out var allowedTransitions))
                 return false;
@@ -21,7 +21,7 @@ namespace TaskManager.Domain.StateMachine
             return allowedTransitions.Contains(newStatus);
         }
 
-        public static TaskStatus Transition(TaskStatus currentStatus, TaskStatus newStatus)
+        public TaskStatus Transition(TaskStatus currentStatus, TaskStatus newStatus)
         {
             if (!CanTransition(currentStatus, newStatus))
                 throw new InvalidOperationException($"Cannot transition from {currentStatus} to {newStatus}");

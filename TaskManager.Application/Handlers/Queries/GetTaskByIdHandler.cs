@@ -7,6 +7,8 @@ using Microsoft.Extensions.Logging;
 using TaskManager.Application.Exceptions;
 using TaskManager.Application.Models;
 using TaskManager.Application.Queries;
+using TaskManager.Infrastructure.Caching;
+using TaskManager.Infrastructure.Repositories;
 
 namespace TaskManager.Application.Handlers.Queries
 {

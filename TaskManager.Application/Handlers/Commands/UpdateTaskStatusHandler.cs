@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using TaskManager.Application.Commands;
 using TaskManager.Application.Exceptions;
 using TaskManager.Domain.StateMachine;
+using TaskManager.Infrastructure.Repositories;
 
 namespace TaskManager.Application.Handlers.Commands
 {
@@ -29,7 +30,6 @@ namespace TaskManager.Application.Handlers.Commands
         public async Task Handle(UpdateTaskStatusCommand command)
         {
             _logger.LogInformation("Updating task status for ID: {Id} to {Status}", command.Id, command.NewStatus);
-
             var task = await _taskRepository.GetByIdAsync(command.Id);
             if (task == null)
             {

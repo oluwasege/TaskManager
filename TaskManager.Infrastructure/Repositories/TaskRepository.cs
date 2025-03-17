@@ -18,12 +18,12 @@ namespace TaskManager.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<Task> GetByIdAsync(Guid id)
+        public async Task<Domain.Entities.Task> GetByIdAsync(Guid id)
         {
             return await _context.Tasks.FindAsync(id);
         }
 
-        public async Task<(List<Task>, int)> GetAllAsync(int page, int pageSize)
+        public async Task<(List<Domain.Entities.Task>, int)> GetAllAsync(int page, int pageSize)
         {
             var totalCount = await _context.Tasks.CountAsync();
             var tasks = await _context.Tasks
@@ -35,7 +35,7 @@ namespace TaskManager.Infrastructure.Repositories
             return (tasks, totalCount);
         }
 
-        public async Task<(List<Task>, int)> GetByStatusAsync(TaskStatus status, int page, int pageSize)
+        public async Task<(List<Domain.Entities.Task>, int)> GetByStatusAsync(TaskStatus status, int page, int pageSize)
         {
             var totalCount = await _context.Tasks.CountAsync(t => t.Status == status);
             var tasks = await _context.Tasks
@@ -48,13 +48,13 @@ namespace TaskManager.Infrastructure.Repositories
             return (tasks, totalCount);
         }
 
-        public async Task AddAsync(Task task)
+        public async Task AddAsync(Domain.Entities.Task task)
         {
             await _context.Tasks.AddAsync(task);
             await _context.SaveChangesAsync();
         }
 
-        public async Task UpdateAsync(Task task)
+        public async Task UpdateAsync(Domain.Entities.Task task)
         {
             _context.Tasks.Update(task);
             await _context.SaveChangesAsync();

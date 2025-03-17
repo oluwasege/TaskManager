@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using TaskManager.Application.Models;
 using TaskManager.Application.Queries;
+using TaskManager.Infrastructure.Caching;
+using TaskManager.Infrastructure.Repositories;
 
 namespace TaskManager.Application.Handlers.Queries
 {
@@ -67,5 +69,4 @@ namespace TaskManager.Application.Handlers.Queries
             return result;
         }
     }
-}
 }
