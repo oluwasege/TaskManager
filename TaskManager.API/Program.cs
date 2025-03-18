@@ -72,21 +72,22 @@ namespace TaskManager.API
             // Register application services
             builder.Services.AddScoped<ITaskRepository, TaskRepository>();
             builder.Services.AddSingleton<ICacheService, RedisCacheService>();
-            builder.Services.AddSingleton<RabbitMqProducer>(sp =>
-            {
-                var logger = sp.GetRequiredService<ILogger<RabbitMqProducer>>();
-                var config = sp.GetRequiredService<IConfiguration>();
-                // Block on the async initialization.
-                return RabbitMqProducer.CreateAsync(config, logger).GetAwaiter().GetResult();
-            });
+            //builder.Services.AddSingleton<RabbitMqProducer>(sp =>
+            //{
+            //    var logger = sp.GetRequiredService<ILogger<RabbitMqProducer>>();
+            //    var config = sp.GetRequiredService<IConfiguration>();
+            //    // Block on the async initialization.
+            //    return RabbitMqProducer.CreateAsync(config, logger).GetAwaiter().GetResult();
+            //});
+            builder.Services.AddSingleton<IMessageProducer, RabbitMqProducer>();
             builder.Services.AddHostedService<RabbitMqConsumer>();
             builder.Services.AddSingleton<TaskStateMachine>();
 
             // Register command and query handlers
             builder.Services.AddScoped<ICreateTaskHandler, CreateTaskHandler>();
-            builder.Services.AddScoped<UpdateTaskHandler>();
+            builder.Services.AddScoped<IUpdateTaskHandler,UpdateTaskHandler>();
             builder.Services.AddScoped<UpdateTaskStatusHandler>();
-            builder.Services.AddScoped<DeleteTaskHandler>();
+            builder.Services.AddScoped<IDeleteTaskHandler,DeleteTaskHandler>();
             builder.Services.AddScoped<GetTaskByIdHandler>();
             builder.Services.AddScoped<GetAllTasksHandler>();
             builder.Services.AddScoped<GetTasksByStatusHandler>();

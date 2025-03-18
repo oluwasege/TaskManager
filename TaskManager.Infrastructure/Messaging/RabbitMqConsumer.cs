@@ -23,16 +23,18 @@ namespace TaskManager.Infrastructure.Messaging
         public RabbitMqConsumer(
             IConfiguration configuration,
             IServiceScopeFactory serviceScopeFactory,
-            ILogger<RabbitMqConsumer> logger,
-            string exchangeName,
-            string queueName,
-            string routingKey)
+            ILogger<RabbitMqConsumer> logger
+            //string exchangeName,
+            //string queueName,
+            //string routingKey)
+            )
+
         {
             _serviceScopeFactory = serviceScopeFactory;
             _logger = logger;
-            _exchangeName = exchangeName;
-            _queueName = queueName;
-            _routingKey = routingKey;
+            _exchangeName = "task_events";
+            _queueName = "task_created_queue";
+            _routingKey = "task.created";
 
             try
             {

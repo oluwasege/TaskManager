@@ -15,9 +15,9 @@ namespace TaskManager.API.Controllers
     public class TasksController : ControllerBase
     {
         private readonly ICreateTaskHandler _createTaskHandler;
-        private readonly UpdateTaskHandler _updateTaskHandler;
+        private readonly IUpdateTaskHandler _updateTaskHandler;
         private readonly UpdateTaskStatusHandler _updateTaskStatusHandler;
-        private readonly DeleteTaskHandler _deleteTaskHandler;
+        private readonly IDeleteTaskHandler _deleteTaskHandler;
         private readonly GetTaskByIdHandler _getTaskByIdHandler;
         private readonly GetAllTasksHandler _getAllTasksHandler;
         private readonly GetTasksByStatusHandler _getTasksByStatusHandler;
@@ -25,9 +25,9 @@ namespace TaskManager.API.Controllers
 
         public TasksController(
         ICreateTaskHandler createTaskHandler,
-        UpdateTaskHandler updateTaskHandler,
+        IUpdateTaskHandler updateTaskHandler,
         UpdateTaskStatusHandler updateTaskStatusHandler,
-        DeleteTaskHandler deleteTaskHandler,
+        IDeleteTaskHandler deleteTaskHandler,
         GetTaskByIdHandler getTaskByIdHandler,
         GetAllTasksHandler getAllTasksHandler,
         GetTasksByStatusHandler getTasksByStatusHandler,

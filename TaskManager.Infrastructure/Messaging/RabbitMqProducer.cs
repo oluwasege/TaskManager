@@ -8,7 +8,7 @@ using RabbitMQ.Client;
 
 namespace TaskManager.Infrastructure.Messaging
 {
-    public class RabbitMqProducer : IMessageProducer
+    public class RabbitMqProducer :IMessageProducer
     {
         private IConnection _connection;
         private IChannel _channel;
@@ -22,6 +22,34 @@ namespace TaskManager.Infrastructure.Messaging
         {
             _configuration = configuration;
             _logger = logger;
+
+            try
+            {
+                var factory = new ConnectionFactory
+                {
+                    HostName = configuration["RabbitMQ:Host"],
+                    UserName = configuration["RabbitMQ:Username"],
+                    Password = configuration["RabbitMQ:Password"]
+                };
+
+                _connection = factory.CreateConnectionAsync().Result;
+                _channel = _connection.CreateChannelAsync().Result;
+
+                _channel.ExchangeDeclareAsync(
+                    exchange: ExchangeName,
+                    type: ExchangeType.Topic,
+                    durable: true,
+                    autoDelete: false);
+
+                _logger.LogInformation("Connected to RabbitMQ");
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to connect to RabbitMQ");
+                throw;
+            }
+
         }
 
         // Use this static method to asynchronously create and initialize an instance.
@@ -81,5 +109,10 @@ namespace TaskManager.Infrastructure.Messaging
                 _logger.LogError(ex, "Error publishing message to RabbitMQ");
             }
         }
+    }
+
+    public class ProducerHolder
+    {
+        public ProducerHolder? Producer { get; set; }
     }
 }

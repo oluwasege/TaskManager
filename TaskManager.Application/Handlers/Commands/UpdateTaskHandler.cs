@@ -11,20 +11,19 @@ using TaskManager.Infrastructure.Repositories;
 
 namespace TaskManager.Application.Handlers.Commands
 {
-    public class UpdateTaskHandler
+    public class UpdateTaskHandler : IUpdateTaskHandler
     {
         private readonly ITaskRepository _taskRepository;
         private readonly ILogger<UpdateTaskHandler> _logger;
-        private readonly IMessageProducer _messageProducer;
+        //private readonly IMessageProducer _messageProducer;
 
         public UpdateTaskHandler(
             ITaskRepository taskRepository, 
-            ILogger<UpdateTaskHandler> logger,
-            IMessageProducer messageProducer)
+            ILogger<UpdateTaskHandler> logger)
         {
             _taskRepository = taskRepository;
             _logger = logger;
-            _messageProducer = messageProducer;
+            //_messageProducer = messageProducer;
         }
 
         public async Task Handle(UpdateTaskCommand command)
@@ -46,7 +45,7 @@ namespace TaskManager.Application.Handlers.Commands
             await _taskRepository.UpdateAsync(task);
 
             // Publish message for asynchronous processing
-            await _messageProducer.PublishTaskCreated(new TaskCreatedMessage { TaskId = task.Id, IsNew = false });
+           // await _messageProducer.PublishTaskCreated(new TaskCreatedMessage { TaskId = task.Id, IsNew = false });
         }
 
     }
