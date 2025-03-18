@@ -15,15 +15,16 @@ namespace TaskManager.Application.Handlers.Commands
     {
         private readonly ITaskRepository _taskRepository;
         private readonly ILogger<DeleteTaskHandler> _logger;
-        //private readonly IMessageProducer _messageProducer;
+        private readonly IMessageProducer _messageProducer;
 
         public DeleteTaskHandler(
             ITaskRepository taskRepository,
-            ILogger<DeleteTaskHandler> logger)
+            ILogger<DeleteTaskHandler> logger,
+            IMessageProducer messageProducer)
         {
             _taskRepository = taskRepository;
             _logger = logger;
-            //_messageProducer = messageProducer;
+            _messageProducer = messageProducer;
         }
 
         public async Task Handle(DeleteTaskCommand command)
@@ -39,7 +40,7 @@ namespace TaskManager.Application.Handlers.Commands
 
             await _taskRepository.DeleteAsync(command.Id);
             // Publish message for asynchronous processing
-            //await _messageProducer.PublishTaskCreated(new TaskCreatedMessage { TaskId = task.Id, IsNew = false });
+            await _messageProducer.PublishTaskCreated(new TaskCreatedMessage { TaskId = task.Id, IsNew = false });
         }
     }
 }

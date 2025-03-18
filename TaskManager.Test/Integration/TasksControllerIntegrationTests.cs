@@ -18,7 +18,7 @@ using Moq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace TaskManager.Tests.Integration
+namespace TaskManager.Test.Integration
 {
     public class TasksControllerIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
     {

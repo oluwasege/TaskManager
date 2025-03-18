@@ -10,5 +10,6 @@ namespace TaskManager.Infrastructure.Repositories
         Task AddAsync(Domain.Entities.Task task);
         Task UpdateAsync(Domain.Entities.Task task);
         Task DeleteAsync(Guid id);
+        Task<Domain.Entities.Task> GetByTitleAsync(string task);
     }
 }

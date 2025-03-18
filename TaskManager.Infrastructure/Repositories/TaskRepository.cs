@@ -23,6 +23,11 @@ namespace TaskManager.Infrastructure.Repositories
             return await _context.Tasks.FindAsync(id);
         }
 
+        public async Task<Domain.Entities.Task> GetByTitleAsync(string task)
+        {
+            return await _context.Tasks.FirstOrDefaultAsync(x=>x.Title.ToLower()==task.ToLower());
+        }
+
         public async Task<(List<Domain.Entities.Task>, int)> GetAllAsync(int page, int pageSize)
         {
             var totalCount = await _context.Tasks.CountAsync();

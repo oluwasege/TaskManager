@@ -30,7 +30,12 @@ namespace TaskManager.Application.Handlers.Commands
         public async Task<Guid> Handle(CreateTaskCommand command)
         {
             _logger.LogInformation("Creating new task with title: {Title}", command.Title);
-
+            var existingTask = await _taskRepository.GetByTitleAsync(command.Title);
+            if (existingTask is null)
+            {
+                _logger.LogWarning("Task with title '{Title}' already exists", command.Title);
+                throw new InvalidOperationException($"Task with title '{command.Title}' already exists");
+            }
             var task = new Domain.Entities.Task
             {
                 Id = Guid.NewGuid(),
