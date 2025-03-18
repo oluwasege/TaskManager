@@ -15,6 +15,7 @@ using TaskManager.Infrastructure.Helpers;
 using TaskManager.Infrastructure.Messaging;
 using TaskManager.Infrastructure.Persistence;
 using TaskManager.Infrastructure.Repositories;
+using Unchase.Swashbuckle.AspNetCore.Extensions.Extensions;
 
 namespace TaskManager.API.Configurations
 {
@@ -24,7 +25,7 @@ namespace TaskManager.API.Configurations
         {
             //set the database to use SQL Server.
             services.AddDbContext<ApplicationDbContext>(
-              options => options.UseSqlServer(configuration.GetConnectionString("Default"),
+              options => options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"),
               p =>
               {
                   p.EnableRetryOnFailure();
@@ -66,7 +67,7 @@ namespace TaskManager.API.Configurations
                 {
                     Title = "Task Management API",
                     Version = "v1",
-                    Description = "A microservices-based Task Management API built with .NET Core",
+                    Description = "A Task Management API built with .NET Core",
                     Contact = new OpenApiContact
                     {
                         Name = "Tingtel Tech",
@@ -78,6 +79,8 @@ namespace TaskManager.API.Configurations
                 // Include XML comments in Swagger documentation
                 var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                c.AddEnumsWithValuesFixFilters();
+                c.IncludeXmlComments(xmlPath);
             });
 
             services.AddEndpointsApiExplorer();

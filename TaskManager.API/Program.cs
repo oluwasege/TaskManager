@@ -29,7 +29,7 @@ namespace TaskManager.API
             // Configure the HTTP request pipeline.
             app.ConfigureApp(builder.Configuration);
             app.MapControllers();
-            app.RunAsync();
+            app.Run();
         }
     }
 }

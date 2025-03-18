@@ -4,9 +4,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using TaskManager.Infrastructure.Caching;
+using TaskManager.Infrastructure.Helpers;
 
 namespace TaskManager.Infrastructure.Messaging
 {
@@ -16,14 +18,16 @@ namespace TaskManager.Infrastructure.Messaging
         private readonly IChannel _channel;
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly ILogger<RabbitMqConsumer> _logger;
-        private readonly string _exchangeName;
-        private readonly string _queueName;
-        private readonly string _routingKey;
+        //private readonly string _exchangeName;
+        //private readonly string _queueName;
+        //private readonly string _routingKey;
+        private readonly RabbitMQConfig rabbitMQConfig;
 
         public RabbitMqConsumer(
             IConfiguration configuration,
             IServiceScopeFactory serviceScopeFactory,
-            ILogger<RabbitMqConsumer> logger
+            ILogger<RabbitMqConsumer> logger,
+            IOptions<RabbitMQConfig> options
             //string exchangeName,
             //string queueName,
             //string routingKey)
@@ -32,38 +36,42 @@ namespace TaskManager.Infrastructure.Messaging
         {
             _serviceScopeFactory = serviceScopeFactory;
             _logger = logger;
-            _exchangeName = "task_events";
-            _queueName = "task_created_queue";
-            _routingKey = "task.created";
+            //_exchangeName = "task_events";
+            //_queueName = "task_created_queue";
+            //_routingKey = "task.created";
+            rabbitMQConfig = options.Value;
 
             try
             {
                 var factory = new ConnectionFactory
                 {
-                    HostName = configuration["RabbitMQ:Host"],
-                    UserName = configuration["RabbitMQ:Username"],
-                    Password = configuration["RabbitMQ:Password"]
+                    //HostName = configuration["RabbitMQ:Host"],
+                    //UserName = configuration["RabbitMQ:Username"],
+                    //Password = configuration["RabbitMQ:Password"]
+                    HostName = rabbitMQConfig.Host,
+                    UserName = rabbitMQConfig.Username,
+                    Password = rabbitMQConfig.Password
                 };
 
                 _connection = factory.CreateConnectionAsync().Result;
                 _channel = _connection.CreateChannelAsync().Result;
 
                 _channel.ExchangeDeclareAsync(
-                    exchange: _exchangeName,
+                    exchange: rabbitMQConfig.ExchangeName,
                     type: ExchangeType.Topic,
                     durable: true,
                     autoDelete: false);
 
                 _channel.QueueDeclareAsync(
-                    queue: _queueName,
+                    queue: rabbitMQConfig.QueueName,
                     durable: true,
                     exclusive: false,
                     autoDelete: false);
 
                 _channel.QueueBindAsync(
-                    queue: _queueName,
-                    exchange: _exchangeName,
-                    routingKey: _routingKey);
+                    queue: rabbitMQConfig.QueueName,
+                    exchange: rabbitMQConfig.ExchangeName,
+                    routingKey: rabbitMQConfig.RoutingKey);
 
                 _logger.LogInformation("RabbitMQ consumer initialized");
             }
@@ -101,7 +109,7 @@ namespace TaskManager.Infrastructure.Messaging
                 }
             };
 
-            await _channel.BasicConsumeAsync(queue: _queueName, autoAck: false, consumer: consumer);
+            await _channel.BasicConsumeAsync(queue: rabbitMQConfig.QueueName, autoAck: false, consumer: consumer);
         }
 
         private async Task ProcessTaskCreatedMessageAsync(TaskCreatedMessage message)

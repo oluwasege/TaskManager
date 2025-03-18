@@ -4,7 +4,9 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
+using TaskManager.Infrastructure.Helpers;
 
 namespace TaskManager.Infrastructure.Messaging
 {
@@ -13,30 +15,34 @@ namespace TaskManager.Infrastructure.Messaging
         private IConnection _connection;
         private IChannel _channel;
         private readonly ILogger<RabbitMqProducer> _logger;
-        private readonly IConfiguration _configuration;
-        private const string ExchangeName = "task_events";
-        private const string RoutingKey = "task.created";
+        //private readonly IConfiguration _configuration;
+        //private const string ExchangeName = "task_events";
+        //private const string RoutingKey = "task.created";
+        private readonly RabbitMQConfig rabbitMQConfig;
 
         // Private constructor prevents direct instantiation.
-        public RabbitMqProducer(IConfiguration configuration, ILogger<RabbitMqProducer> logger)
+        public RabbitMqProducer(IConfiguration configuration, ILogger<RabbitMqProducer> logger,IOptions<RabbitMQConfig> options)
         {
-            _configuration = configuration;
+            rabbitMQConfig = options.Value;
             _logger = logger;
 
             try
             {
                 var factory = new ConnectionFactory
                 {
-                    HostName = configuration["RabbitMQ:Host"],
-                    UserName = configuration["RabbitMQ:Username"],
-                    Password = configuration["RabbitMQ:Password"]
+                    //HostName = configuration["RabbitMQ:Host"],
+                    //UserName = configuration["RabbitMQ:Username"],
+                    //Password = configuration["RabbitMQ:Password"]
+                    HostName = rabbitMQConfig.Host,
+                    UserName = rabbitMQConfig.Username,
+                    Password = rabbitMQConfig.Password
                 };
 
                 _connection = factory.CreateConnectionAsync().Result;
                 _channel = _connection.CreateChannelAsync().Result;
 
                 _channel.ExchangeDeclareAsync(
-                    exchange: ExchangeName,
+                    exchange: rabbitMQConfig.ExchangeName,
                     type: ExchangeType.Topic,
                     durable: true,
                     autoDelete: false);
@@ -50,44 +56,6 @@ namespace TaskManager.Infrastructure.Messaging
                 throw;
             }
 
-        }
-
-        // Use this static method to asynchronously create and initialize an instance.
-        public static async Task<RabbitMqProducer> CreateAsync(IConfiguration configuration, ILogger<RabbitMqProducer> logger)
-        {
-            var producer = new RabbitMqProducer(configuration, logger);
-            await producer.InitializeAsync();
-            return producer;
-        }
-
-        private async Task InitializeAsync()
-        {
-            try
-            {
-                var factory = new ConnectionFactory
-                {
-                    HostName = _configuration["RabbitMQ:Host"],
-                    UserName = _configuration["RabbitMQ:Username"],
-                    Password = _configuration["RabbitMQ:Password"]
-                };
-
-                // Use the asynchronous connection creation method.
-                _connection = await factory.CreateConnectionAsync();
-                _channel = await _connection.CreateChannelAsync();
-
-                await _channel.ExchangeDeclareAsync(
-                    exchange: ExchangeName,
-                    type: ExchangeType.Topic,
-                    durable: true,
-                    autoDelete: false);
-
-                _logger.LogInformation("Connected to RabbitMQ");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to connect to RabbitMQ");
-                throw;
-            }
         }
 
         public async Task PublishTaskCreated(TaskCreatedMessage message)
@@ -98,8 +66,8 @@ namespace TaskManager.Infrastructure.Messaging
                 var body = Encoding.UTF8.GetBytes(json);
 
                 await _channel.BasicPublishAsync(
-                    exchange: ExchangeName,
-                    routingKey: RoutingKey,
+                    exchange: rabbitMQConfig.ExchangeName,
+                    routingKey: rabbitMQConfig.RoutingKey,
                     body: body);
 
                 _logger.LogInformation("Published task created message for TaskId: {TaskId}", message.TaskId);
@@ -109,10 +77,5 @@ namespace TaskManager.Infrastructure.Messaging
                 _logger.LogError(ex, "Error publishing message to RabbitMQ");
             }
         }
-    }
-
-    public class ProducerHolder
-    {
-        public ProducerHolder? Producer { get; set; }
     }
 }

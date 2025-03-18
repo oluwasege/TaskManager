@@ -31,7 +31,7 @@ namespace TaskManager.Application.Handlers.Commands
         {
             _logger.LogInformation("Creating new task with title: {Title}", command.Title);
             var existingTask = await _taskRepository.GetByTitleAsync(command.Title);
-            if (existingTask is null)
+            if (existingTask is not null)
             {
                 _logger.LogWarning("Task with title '{Title}' already exists", command.Title);
                 throw new InvalidOperationException($"Task with title '{command.Title}' already exists");
