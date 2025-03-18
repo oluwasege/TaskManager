@@ -143,7 +143,7 @@ For detailed request and response schemas, refer to the Swagger documentation.
 - Add health checks and monitoring
 - Deploy as Docker containers with orchestration
 
-
+```Swagger
 {
 "openapi": "3.0.1",
 "info": {
@@ -688,3 +688,4 @@ For detailed request and response schemas, refer to the Swagger documentation.
 }
 }
 }
+```
