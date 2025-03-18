@@ -147,4 +147,4 @@ For detailed request and response schemas, refer to the Swagger documentation.
 
 You can view the complete API documentation in the Swagger format by clicking the link below:
 
-[View Swagger JSON]()
+[View Swagger JSON](https://raw.githubusercontent.com/oluwasege/TaskManager/refs/heads/master/swagger.json)
