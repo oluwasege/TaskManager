@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using TaskManager.Application.Commands;
 using TaskManager.Application.Exceptions;
+using TaskManager.Infrastructure.Messaging;
 using TaskManager.Infrastructure.Repositories;
 
 namespace TaskManager.Application.Handlers.Commands
@@ -14,11 +15,16 @@ namespace TaskManager.Application.Handlers.Commands
     {
         private readonly ITaskRepository _taskRepository;
         private readonly ILogger<DeleteTaskHandler> _logger;
+        private readonly IMessageProducer _messageProducer;
 
-        public DeleteTaskHandler(ITaskRepository taskRepository, ILogger<DeleteTaskHandler> logger)
+        public DeleteTaskHandler(
+            ITaskRepository taskRepository,
+            ILogger<DeleteTaskHandler> logger,
+            IMessageProducer messageProducer)
         {
             _taskRepository = taskRepository;
             _logger = logger;
+            _messageProducer = messageProducer;
         }
 
         public async Task Handle(DeleteTaskCommand command)
@@ -33,6 +39,8 @@ namespace TaskManager.Application.Handlers.Commands
             }
 
             await _taskRepository.DeleteAsync(command.Id);
+            // Publish message for asynchronous processing
+            await _messageProducer.PublishTaskCreated(new TaskCreatedMessage { TaskId = task.Id, IsNew = false });
         }
     }
 }

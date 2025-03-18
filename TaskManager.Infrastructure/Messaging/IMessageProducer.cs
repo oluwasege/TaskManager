@@ -8,6 +8,6 @@ namespace TaskManager.Infrastructure.Messaging
 {
     public interface IMessageProducer
     {
-        Task PublishMessage<T>(T message);
+        Task PublishTaskCreated(TaskCreatedMessage message);
     }
 }

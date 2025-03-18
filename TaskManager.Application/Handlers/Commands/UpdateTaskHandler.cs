@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using TaskManager.Application.Commands;
 using TaskManager.Application.Exceptions;
+using TaskManager.Infrastructure.Messaging;
 using TaskManager.Infrastructure.Repositories;
 
 namespace TaskManager.Application.Handlers.Commands
@@ -14,11 +15,16 @@ namespace TaskManager.Application.Handlers.Commands
     {
         private readonly ITaskRepository _taskRepository;
         private readonly ILogger<UpdateTaskHandler> _logger;
+        private readonly IMessageProducer _messageProducer;
 
-        public UpdateTaskHandler(ITaskRepository taskRepository, ILogger<UpdateTaskHandler> logger)
+        public UpdateTaskHandler(
+            ITaskRepository taskRepository, 
+            ILogger<UpdateTaskHandler> logger,
+            IMessageProducer messageProducer)
         {
             _taskRepository = taskRepository;
             _logger = logger;
+            _messageProducer = messageProducer;
         }
 
         public async Task Handle(UpdateTaskCommand command)
@@ -38,6 +44,9 @@ namespace TaskManager.Application.Handlers.Commands
             task.UpdatedAt = DateTime.UtcNow;
 
             await _taskRepository.UpdateAsync(task);
+
+            // Publish message for asynchronous processing
+            await _messageProducer.PublishTaskCreated(new TaskCreatedMessage { TaskId = task.Id, IsNew = false });
         }
 
     }

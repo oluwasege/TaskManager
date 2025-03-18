@@ -9,5 +9,6 @@ namespace TaskManager.Infrastructure.Messaging
     public class TaskCreatedMessage
     {
         public Guid TaskId { get; set; }
+        public bool IsNew { get; set; }
     }
 }

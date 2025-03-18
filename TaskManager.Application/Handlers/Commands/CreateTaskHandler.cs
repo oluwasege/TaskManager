@@ -15,11 +15,16 @@ namespace TaskManager.Application.Handlers.Commands
     {
         private readonly ITaskRepository _taskRepository;
         private readonly ILogger<CreateTaskHandler> _logger;
+        private readonly IMessageProducer _messageProducer;
 
-        public CreateTaskHandler(ITaskRepository taskRepository, ILogger<CreateTaskHandler> logger)
+        public CreateTaskHandler(
+            ITaskRepository taskRepository,
+            ILogger<CreateTaskHandler> logger,
+            IMessageProducer messageProducer)
         {
             _taskRepository = taskRepository;
             _logger = logger;
+            _messageProducer = messageProducer;
         }
 
         public async Task<Guid> Handle(CreateTaskCommand command)
@@ -38,6 +43,9 @@ namespace TaskManager.Application.Handlers.Commands
             };
 
             await _taskRepository.AddAsync(task);
+
+            // Publish message for asynchronous processing
+            await _messageProducer.PublishTaskCreated(new TaskCreatedMessage { TaskId = task.Id, IsNew = true });
             return task.Id;
         }
     }

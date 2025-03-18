@@ -7,16 +7,15 @@ using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using TaskManager.Infrastructure.Caching;
-using TaskManager.Application.Handlers.Commands;
 
 namespace TaskManager.Infrastructure.Messaging
 {
-    public class RabbitMqConsumer<T> : BackgroundService where T : class
+    public class RabbitMqConsumer : BackgroundService
     {
         private readonly IConnection _connection;
         private readonly IChannel _channel;
         private readonly IServiceScopeFactory _serviceScopeFactory;
-        private readonly ILogger<RabbitMqConsumer<T>> _logger;
+        private readonly ILogger<RabbitMqConsumer> _logger;
         private readonly string _exchangeName;
         private readonly string _queueName;
         private readonly string _routingKey;
@@ -24,7 +23,7 @@ namespace TaskManager.Infrastructure.Messaging
         public RabbitMqConsumer(
             IConfiguration configuration,
             IServiceScopeFactory serviceScopeFactory,
-            ILogger<RabbitMqConsumer<T>> logger,
+            ILogger<RabbitMqConsumer> logger,
             string exchangeName,
             string queueName,
             string routingKey)
@@ -113,7 +112,14 @@ namespace TaskManager.Infrastructure.Messaging
                 await cacheService.RemoveAsync("tasks:all:*");
                 await cacheService.RemoveAsync("tasks:status:Pending:*");
 
-            _logger.LogInformation("Processed task created message for TaskId: {TaskId}", message.TaskId);
+            if(message.IsNew)
+            {
+                _logger.LogInformation("Processed task created message for TaskId: {TaskId}", message.TaskId);
+            }
+            else
+            {
+                _logger.LogInformation("Processed task updated message for TaskId: {TaskId}", message.TaskId);
+            }
         }
 
         public override void Dispose()
